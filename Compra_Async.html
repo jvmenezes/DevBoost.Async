@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Fazendo compras</title>
+  </head>
+  <body>    
+	
+	<div id="radionAsynSync">
+		<p>Selecione abaixo de que forma vamos comprar?</p>
+		
+		<input type="radio" id="radioAsync" name="typeSync" value="Assíncrono">
+		<label for="male">Assíncrono</label><br>
+		<input type="radio" id="radioSync" name="typeSync" value="Síncrono">
+		<label for="female">Síncrono</label><br>
+	</div>	
+	
+	<br>
+	
+	<h4>Selecione os estabelecimentos que deseja realizar as suas compras?</h4>
+	<table style="width:100%" border="1px">
+	  <tr>
+		<th>Pizzaria</th>
+		<th>Padaria</th>
+		<th>Mercado</th>
+	  </tr>
+	  <tr>
+		<td> 
+			<button type="button" id="pizzaria" onclick="comprar(this, 15)"> Comprar pizza </button>
+		</td>
+		<td> 
+			<button type="button" id="padaria" onclick="comprar(this, 10)"> Comprar Pão e Leite </button> 
+		</td>
+		<td> 
+			<button type="button" id="mercado" onclick="comprar(this, 5)"> Comprar Mantimentos</button> 
+		</td>
+	  </tr>
+	  <tr>
+		<td id="tdpizzaria">
+			<span id ="spanpizzariaSpinner"></span>
+			<span id ="spanpizzariaText"></span>
+		</td>
+		<td id="tdpadaria"> 
+			<span id ="spanpadariaSpinner"></span>
+			<span id ="spanpadariaText"></span>
+		</td>
+		<td id="tdmercado">
+			<span id ="spanmercadoSpinner"></span>
+			<span id ="spanmercadoText"></span>
+		</td>
+	  </tr>
+	  
+	</table>
+	
+<script type="text/javascript">
+
+//900, 300, 2400
+
+	var itensComprados = new Array();	
+	
+	function podeComprar(){	
+		
+		var radioSync = document.getElementById('radioSync');		
+		
+		if(radioSync.checked)
+			return false;
+		else
+			return true;
+
+	}
+
+	function validaRadio(){
+		var radio;
+		var itemchecked = false;
+		
+		var typeRadio = document.getElementsByName('typeSync');
+		
+		for(var i = 0 ; i < typeRadio.length ; i++){
+			radio = typeRadio[i];
+			if(radio.checked){
+				itemchecked = true;
+			}
+		}
+		
+		if(!itemchecked){
+			return false;
+		}else{
+			return true;
+		}
+	}
+
+	function getTD(order){
+		var td = document.getElementById('td'+order.id);	
+		return td;
+	}
+	
+	function getSpan(order, opcao){
+		var span = document.getElementById('span'+order.id+opcao);	
+		return span;
+	}
+
+	function comprar(order, tempo){
+		var indexItemJaComprado = itensComprados.indexOf(order.id);
+		var itemJaComprado = indexItemJaComprado > -1;
+		var jaIniciouAsCompras = itensComprados.length > 0;
+		
+		if(itemJaComprado || (jaIniciouAsCompras && !podeComprar()) ){
+			alert('Já foi realizado uma compra no estabelecimento: '+ (itemJaComprado ? itensComprados[indexItemJaComprado] : itensComprados[0]) + '\n É necessário aguardar a sua conclusão para que seja possível fazer outra compra');
+			return false;
+		}
+	
+		if (!validaRadio()){
+			alert('É necessário selecionar uma das opções');
+			
+			var radionAS = document.getElementById('radionAsynSync');
+			radionAS.focus();
+			radionAS.animate({backgroundColor: "#aa0000"}, 2500 );
+			return false;
+		}
+		
+		itensComprados[itensComprados.length] = order.id;			
+		
+		var td = getTD(order);
+		
+		td.style.backgroundColor="#FF0000";
+		
+		startCountdown(order, tempo);
+	}
+	
+	function jaComprei(order){
+		var td = getTD(order);	
+		td.style.backgroundColor="#32CD32";
+		
+		var spanSpinner = getSpan(order, 'Spinner');
+		removeSpinner(spanSpinner);
+		
+		var spanText = getSpan(order, 'Text');				
+		spanText.innerHTML = 'PEDIDO FINALIZADO EM: '+getDateAndHour();				 
+		
+		var indexItemJaComprado = itensComprados.indexOf(order.id);
+		itensComprados.splice(indexItemJaComprado, 1);		
+	}
+
+	function startCountdown(order, tempo){
+
+		// Se o tempo não for zerado
+		if((tempo - 1) >= 0){
+
+			// Pega a parte inteira dos minutos
+			var min = parseInt(tempo/60);
+
+			// horas, pega a parte inteira dos minutos
+			var hor = parseInt(min/60);
+			
+			var days = parseInt(hor/24);		
+
+			hor = hor % 24;	
+
+			//atualiza a variável minutos obtendo o tempo restante dos minutos
+			min = min%60;
+
+			// Calcula os segundos restantes
+			var seg = tempo%60;
+
+			// Formata o número menor que dez, ex: 08, 07, …
+			if(min < 10){
+				min = "0"+min;
+				min = min.substr(0, 2);
+			}
+
+			if(seg <=9){
+				seg = "0"+seg;
+			}
+
+			if(hor <=9){
+				hor = "0"+hor;
+			}
+
+			// Cria a variável para formatar no estilo hora/cronômetro
+			if(days > 1)
+			horaImprimivel = days+' dia '+hor+':' + min + ':' + seg;
+			else if(days == 1)
+			horaImprimivel = days+' dia '+hor+':' + min + ':' + seg;
+			else
+			horaImprimivel = hor+':' + min + ':' + seg;				
+			
+			var spanSpinner = getSpan(order, 'Spinner');
+			putSpinner(spanSpinner);
+			
+			var spanText = getSpan(order, 'Text');
+			
+			//Setando o valor do tempo na TD correspondente a compra
+			spanText.innerHTML = 'Seu Pedido será finalizado em: '+horaImprimivel;
+
+			// Define que a função será executada novamente em 1000ms = 1 segundo
+			setTimeout(function(){
+				startCountdown(order, tempo);
+			}, 1000);
+
+			// diminui o tempo
+			tempo--;
+		} else { //Se acabou o tempo, então eu limpo a compra
+			jaComprei(order);
+		}		
+	}
+	
+	function putSpinner(span){
+		if (span.childElementCount > 0)
+			return false;
+	
+		var imgElement = document.createElement("img");
+		imgElement.src = 'images/spinnerLoading.gif';
+		imgElement.width = 30;
+		imgElement.height = 30;
+		
+		
+		span.append(imgElement);	
+	}
+	
+	function removeSpinner(span){		
+		span.childNodes.forEach(function(item){			
+			if (item.nodeName == 'IMG')
+				span.removeChild(item);
+		});		
+	}
+
+	function getDateAndHour(){
+		// Obtém a data/hora atual
+		var data = new Date();
+
+		// Guarda cada pedaço em uma variável
+		var dia     = data.getDate();           // 1-31
+		var dia_sem = data.getDay();            // 0-6 (zero=domingo)
+		var mes     = data.getMonth();          // 0-11 (zero=janeiro)
+		var ano2    = data.getYear();           // 2 dígitos
+		var ano4    = data.getFullYear();       // 4 dígitos
+		var hora    = data.getHours();          // 0-23
+		var min     = data.getMinutes();        // 0-59
+		var seg     = data.getSeconds();        // 0-59
+		var mseg    = data.getMilliseconds();   // 0-999
+		var tz      = data.getTimezoneOffset(); // em minutos
+
+		// Formata a data e a hora (note o mês + 1)
+		var str_data = dia + '/' + (mes+1) + '/' + ano4;
+		var str_hora = hora + ':' + min + ':' + seg;
+
+		// Mostra o resultado
+		info = (str_data + ' às ' + str_hora);
+		
+		return info;
+	}
+
+</script>
+
+  </body>
+</html>
